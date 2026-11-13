@@ -64,7 +64,7 @@ internal static class AuditionTests
         }
         yield return (silent.Count == 0,
             $"all {count} factory presets audition audibly ({silent.Count} silent: {string.Join(", ", silent.Take(8))})");
-        yield return (slow.Count == 0,
+        yield return TimingBudget.Check(silent.Count == 0, slow.Count == 0,
             $"renders stay quick: avg {total / Math.Max(1, count):0} ms, worst {worst:0} ms ({worstId}){(slow.Count > 0 ? " · slow: " + string.Join(", ", slow.Take(5)) : "")}");
 
         // Bare devices audition their default sound; racks say why they can't.
