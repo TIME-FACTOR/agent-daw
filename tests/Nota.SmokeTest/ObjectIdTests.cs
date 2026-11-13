@@ -110,6 +110,19 @@ internal static class ObjectIdTests
                 "an id set to one another object holds is re-minted: ids never collide");
         }
 
+        // A clip id that another track holds (a copy that landed on a different track) is re-minted,
+        // and the track that held it first keeps it. Exercises the project-wide check.
+        using (var e = new NotaEngine())
+        {
+            e.SetBpm(120);
+            int p = e.AddInstrumentTrack(), q = e.AddInstrumentTrack();
+            int pc = e.AddMidiClip(p, 0, 4), qc = e.AddMidiClip(q, 0, 4);
+            string held = e.GetClipUid(p, pc);
+            e.SetClipUid(q, qc, held);
+            yield return (e.GetClipUid(p, pc) == held && e.GetClipUid(q, qc) != held && ObjectIds.IsValid(e.GetClipUid(q, qc)),
+                "a clip id already held on another track is re-minted; the first holder keeps it");
+        }
+
         // --- save / load round trip ----------------------------------------------------
         string dir = Path.Combine(Path.GetTempPath(), "nota-ids-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);

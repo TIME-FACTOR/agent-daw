@@ -827,7 +827,6 @@ template <class F> void forEachClipUid(Track& t, F&& f) {
 } // namespace
 
 void Engine::settleUids(Graph& g) {
-    std::unordered_set<Uid, Uid::Hash> seen;
     auto playing = [&](const std::shared_ptr<Track>& t) {
         if (!authoring_) return false;
         if (authoring_->masterTrack && authoring_->masterTrack == t) return true;
@@ -839,26 +838,62 @@ void Engine::settleUids(Graph& g) {
     all.reserve(g.tracks.size() + 1);
     for (auto& t : g.tracks) all.push_back(t);
     if (g.masterTrack) all.push_back(g.masterTrack);
-    // Pass 1: immutable (shared) tracks register what they hold.
-    for (auto& t : all) {
-        if (!t || !playing(t)) continue;
-        if (!t->uid.isNull()) seen.insert(t->uid);
-        forEachClipUid(*t, [&](Uid& u) { if (!u.isNull()) seen.insert(u); });
+    std::vector<Track*> fresh; // tracks this publish may write to
+    for (auto& t : all)
+        if (t && !playing(t)) fresh.push_back(t.get());
+    if (fresh.empty()) return;
+
+    // Track ids: O(tracks) every time.
+    {
+        std::unordered_set<Uid, Uid::Hash> seen;
+        for (auto& t : all)
+            if (t && playing(t) && !t->uid.isNull()) seen.insert(t->uid);
+        for (Track* t : fresh)
+            if (t->uid.isNull() || !seen.insert(t->uid).second) {
+                t->uid = mintUid();
+                seen.insert(t->uid);
+            }
     }
-    // Pass 2: fresh tracks are settled in place.
-    for (auto& t : all) {
-        if (!t || playing(t)) continue;
-        if (t->uid.isNull() || !seen.insert(t->uid).second) {
-            t->uid = mintUid();
-            seen.insert(t->uid);
-        }
+
+    // Clip ids. A clip id that the same track already held in the previous snapshot can only be
+    // duplicated inside this track, so the common edits (rename, move, notes) cost O(clips of the
+    // changed track). Only an id that is NEW to its track (an add, paste, cross-track move, or
+    // restore) needs a project-wide check, and only then are the other tracks scanned.
+    auto oldOf = [&](const Track& t) -> const Track* {
+        if (!authoring_) return nullptr;
+        if (t.id() == kMasterTrackId) return authoring_->masterTrack.get();
+        for (const auto& o : authoring_->tracks)
+            if (o->id() == t.id()) return o.get();
+        return nullptr;
+    };
+    std::vector<Uid*> pending; // ids to check against the rest of the project
+    std::unordered_set<Uid, Uid::Hash> vouched; // ids in fresh tracks known not to collide
+    for (Track* t : fresh) {
+        std::unordered_set<Uid, Uid::Hash> own;
+        if (const Track* o = oldOf(*t))
+            forEachClipUid(const_cast<Track&>(*o), [&](Uid& u) { if (!u.isNull()) own.insert(u); });
+        std::unordered_set<Uid, Uid::Hash> local;
         forEachClipUid(*t, [&](Uid& u) {
-            if (!u.isNull() && seen.insert(u).second) return;
-            // A non-clip session slot has only default members, so null ids stay null there.
-            u = mintUid();
-            seen.insert(u);
+            if (u.isNull() || !local.insert(u).second) { // missing, or a copy inside this track
+                u = mintUid();
+                local.insert(u);
+                return;
+            }
+            if (own.count(u)) vouched.insert(u);
+            else pending.push_back(&u);
         });
     }
+    if (pending.empty()) return;
+    std::unordered_set<Uid, Uid::Hash> taken(vouched);
+    for (auto& t : all) {
+        if (!t || !playing(t)) continue;
+        forEachClipUid(*t, [&](Uid& u) { if (!u.isNull()) taken.insert(u); });
+    }
+    for (Uid* u : pending)
+        if (!taken.insert(*u).second) {
+            *u = mintUid();
+            taken.insert(*u);
+        }
 }
 
 void Engine::publishRaw(std::shared_ptr<Graph> g, bool restored) {

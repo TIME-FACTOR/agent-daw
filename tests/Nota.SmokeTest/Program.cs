@@ -597,6 +597,7 @@ if (args.Length >= 1 && args[0] == "--device-undo")
     Console.WriteLine(failures == 0 ? "DEVICE UNDO PASSED" : $"DEVICE UNDO FAILED ({failures})");
     return failures == 0 ? 0 : 1;
 }
+if (args.Length >= 1 && args[0] == "--publish-cost") { PublishCostProbe.Run(); return 0; }
 // Stable track/clip ids alone: `--object-ids`. Also part of the full run.
 if (args.Length >= 1 && args[0] == "--object-ids")
 {
