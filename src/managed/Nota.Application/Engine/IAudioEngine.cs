@@ -335,6 +335,12 @@ public interface IAudioEngine : IDisposable
     /// <summary>Sets/gets a clip's user-facing name (empty = default).</summary>
     void SetClipName(int trackId, int clipIndex, string name);
     string GetClipName(int trackId, int clipIndex);
+    /// <summary>Stable ids (32 lowercase hex chars; "" if unknown) that survive edits, undo and save/load. The
+    /// setters restore a saved id on load without an undo entry.</summary>
+    string GetTrackUid(int trackId);
+    bool SetTrackUid(int trackId, string uidHex);
+    string GetClipUid(int trackId, int clipIndex);
+    bool SetClipUid(int trackId, int clipIndex, string uidHex);
     /// <summary>Sets/gets a track's user-facing name (empty = default).</summary>
     void SetTrackName(int trackId, string name);
     string GetTrackName(int trackId);

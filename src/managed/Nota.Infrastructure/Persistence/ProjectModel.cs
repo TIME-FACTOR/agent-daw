@@ -120,6 +120,7 @@ public sealed class TransportDto
 
 public sealed class TrackDto
 {
+    public string? Id { get; set; }           // stable id, 32 lowercase hex (AGENT DAW P0); absent in older files
     public int Type { get; set; }             // 0 = audio, 1 = instrument, 2 = return, 3 = group
     public string? Name { get; set; }
     public float Volume { get; set; } = 1.0f;
@@ -423,6 +424,7 @@ public sealed class SamplerDto
 /// bundle-relative path into <c>samples/</c>.</summary>
 public sealed class AudioClipDto
 {
+    public string? Id { get; set; }           // stable id (AGENT DAW P0); absent in older files
     public string Sample { get; set; } = "";
     public string? Name { get; set; }
     public bool Active { get; set; } = true;   // clip deactivate / key 0 (v17); default true = plays
@@ -550,6 +552,7 @@ public sealed class DeviceDto
 
 public sealed class MidiClipDto
 {
+    public string? Id { get; set; }           // stable id (AGENT DAW P0); absent in older files
     public string? Name { get; set; }
     public bool Active { get; set; } = true;   // clip deactivate / key 0 (v17); default true = plays
     public double StartBeat { get; set; }
@@ -588,6 +591,7 @@ public sealed class SceneDto
 
 public sealed class SessionSlotDto
 {
+    public string? Id { get; set; }           // stable id of the slot's clip, MIDI or audio (AGENT DAW P0)
     public int Scene { get; set; }
     public double LengthBeats { get; set; } = 4.0;
     public NoteDto[] Notes { get; set; } = System.Array.Empty<NoteDto>();

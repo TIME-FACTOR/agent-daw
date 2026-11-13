@@ -103,6 +103,7 @@ public sealed class ProjectService
             if (!engine.TryGetTrackInfo(i, out var ti)) continue;
             var t = new TrackDto
             {
+                Id = ObjectIds.ForSave(engine.GetTrackUid(ti.Id)),
                 Type = ti.Type,
                 Name = engine.GetTrackName(ti.Id) is { Length: > 0 } tn ? tn : null,
                 Volume = ti.Volume,
@@ -240,6 +241,7 @@ public sealed class ProjectService
                     var vol = engine.GetMidiClipEnvelope(ti.Id, c, MidiClipEnvelope.Volume);
                     t.MidiClips.Add(new MidiClipDto
                     {
+                        Id = ObjectIds.ForSave(engine.GetClipUid(ti.Id, c)),
                         Name = engine.GetClipName(ti.Id, c) is { Length: > 0 } mn ? mn : null,
                         Active = ci.IsActive,
                         StartBeat = ci.StartBeat,
@@ -260,6 +262,7 @@ public sealed class ProjectService
                     if (rel == null) continue;
                     var dto = AudioClipState.Capture(engine, ti.Id, c, ac);
                     dto.Sample = rel;
+                    dto.Id = ObjectIds.ForSave(engine.GetClipUid(ti.Id, c));
                     dto.Source = SourceOf(engine, ac.SampleId);
                     int take = engine.ClipTakeId(ti.Id, c);
                     if (take != 0) dto.TakeId = take;
@@ -293,6 +296,7 @@ public sealed class ProjectService
                 {
                     t.SessionSlots.Add(WithClipProps(engine, ti.Id, new SessionSlotDto
                     {
+                        Id = ObjectIds.ForSave(engine.GetClipUid(ti.Id, SessionClip.Index(s))),
                         Scene = s,
                         LengthBeats = engine.SessionSlotLength(ti.Id, s),
                         Notes = ToDtos(engine, engine.GetSessionNotes(ti.Id, s)),
@@ -312,6 +316,7 @@ public sealed class ProjectService
                     audio.Name = null;   // the slot carries its own name
                     t.SessionSlots.Add(WithClipProps(engine, ti.Id, new SessionSlotDto
                     {
+                        Id = ObjectIds.ForSave(engine.GetClipUid(ti.Id, SessionClip.Index(s))),
                         Scene = s,
                         LengthBeats = sa.LengthBeats,
                         Audio = audio,
@@ -820,10 +825,14 @@ public sealed class ProjectService
             foreach (var n in t.NestedSidechains ?? new())
                 if (n.Source >= 0) nestedScDeferred.Add((id, n));
 
+            // Stable ids (AGENT DAW P0): the saved one, else derived from the file so every opener agrees.
+            string trackUid = ObjectIds.ApplyTrack(engine, id, t.Id, doc.Tracks.IndexOf(t), t.Type, t.Name);
+
             foreach (var c in t.MidiClips)
             {
                 int ci = engine.AddMidiClip(id, c.StartBeat, c.LengthBeats);
                 if (ci < 0) continue;
+                ObjectIds.ApplyClip(engine, id, ci, c.Id, trackUid, 'm', t.MidiClips.IndexOf(c), c.StartBeat, c.Name);
                 if (c.Name is { Length: > 0 } mcn) engine.SetClipName(id, ci, mcn);
                 if (!c.Active) engine.SetClipActive(id, ci, false);   // clip deactivate (v17)
                 if (c.Notes.Length > 0) engine.SetClipNotes(id, ci, ToNotes(engine, c.Notes));
@@ -857,6 +866,7 @@ public sealed class ProjectService
             {
                 int ci = AudioClipState.Restore(engine, id, ac, ResolveInBundle(bundleDir, ac.Sample));
                 if (ci < 0) { warnings.Add($"Couldn't reload audio clip \"{ac.Sample}\"."); continue; }
+                ObjectIds.ApplyClip(engine, id, ci, ac.Id, trackUid, 'a', t.AudioClips.IndexOf(ac), ac.StartBeat, ac.Name);
                 if (ac.TakeId is int oldTake && takeIds.TryGetValue(oldTake, out int newTake))
                     engine.SetClipTakeId(id, ci, newTake);
                 if (ac.JoinedEdges is int je && je != 0) joinedEdges.Add((ci, je));
@@ -908,6 +918,7 @@ public sealed class ProjectService
                     ApplyControllers(sl.Controllers, warnings, (ctl, pts) => engine.SetSessionController(id, sl.Scene, ctl, pts));
                 }
                 ApplyClipProps(engine, id, sl);
+                ObjectIds.ApplyClip(engine, id, SessionClip.Index(sl.Scene), sl.Id, trackUid, 's', sl.Scene, 0, sl.Name);
             }
             if (t.SessionNoStop is { } noStop)
                 foreach (int sc in noStop) engine.SetSessionSlotStopButton(id, sc, false);

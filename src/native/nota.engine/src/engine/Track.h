@@ -52,6 +52,7 @@ struct ClipAdsr {
 // A placed audio clip. `startBeat` is the musical anchor on the timeline; the
 // audio itself plays at its natural rate (no time-stretch in MVP — AR/Non-Goal).
 struct AudioClip {
+    Uid uid;                         // stable identity (Uid.h); assigned by Engine::settleUids
     std::shared_ptr<SampleBuffer> sample;
     std::string name;                // user-facing clip name (empty = default)
     double startBeat = 0.0;          // timeline position (beats)
@@ -374,6 +375,9 @@ class Track {
     // it stays aligned when the render sample rate changes (e.g. an export bounce).
     bool frozen() const { return frozen_.load(std::memory_order_relaxed); }
     void setFrozen(bool f) { frozen_.store(f, std::memory_order_relaxed); }
+
+    // Stable identity (Uid.h). Travels with the track through save/load, undo and merges.
+    Uid uid;
 
     // Immutable after publish (only touched while building a snapshot).
     std::vector<AudioClip> clips;           // audio tracks

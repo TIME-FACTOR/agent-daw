@@ -11,6 +11,7 @@
 #include "Automation.h"
 #include "MidiController.h"
 #include "NoteExpression.h"
+#include "Uid.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -57,6 +58,7 @@ struct Note {
 };
 
 struct MidiClip {
+    Uid uid;                  // stable identity (Uid.h); assigned by Engine::settleUids
     std::string name;         // user-facing clip name (empty = default)
     double startBeat = 0.0;   // timeline position of the clip
     double lengthBeats = 4.0; // clip length (for looping later; unused in M2)

@@ -696,6 +696,13 @@ class Engine {
     // is a palette slot (-1 = auto). clipName/trackName write into out (up to cap-1 chars
     // + NUL) and return the full length.
     bool setClipName(int32_t trackId, int32_t clipIndex, const std::string& name);
+    // Stable identities (Uid.h). Hex is 32 chars; the getters return the length written (0 =
+    // unknown track/clip). The setters restore a saved id on load: no undo entry, and an id
+    // already held by another object is re-minted on the next publish (first occurrence wins).
+    int32_t trackUid(int32_t trackId, char* out, int32_t cap) const;
+    bool setTrackUid(int32_t trackId, const Uid& uid);
+    int32_t clipUid(int32_t trackId, int32_t clipIndex, char* out, int32_t cap) const;
+    bool setClipUid(int32_t trackId, int32_t clipIndex, const Uid& uid);
     int32_t clipName(int32_t trackId, int32_t clipIndex, char* out, int32_t cap) const;
     bool setTrackName(int32_t trackId, const std::string& name);
     int32_t trackName(int32_t trackId, char* out, int32_t cap) const;
@@ -1645,6 +1652,7 @@ class Engine {
     // before (undo, redo, a take retry) that a render may still be reading, so a track whose
     // take-join fades must change is cloned rather than written in place.
     void publishRaw(std::shared_ptr<Graph> g, bool restored = false);
+    void settleUids(Graph& g); // stable ids for tracks and clips (Uid.h)
     void configureClipWarp(AudioClip& c, double spb, double devSR); // build the clip's warp cache (unless deferred)
     const AudioClip* warpBuildTargetClip() const;             // in-progress build target, revalidated (null = abandon)
     void reconfigureAllWarpStreams();                         // rebuild warp caches for the current tempo + device SR

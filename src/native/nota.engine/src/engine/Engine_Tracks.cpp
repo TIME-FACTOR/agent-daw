@@ -2972,6 +2972,7 @@ int32_t Engine::splitClip(int32_t trackId, int32_t clipIndex, double atBeat) {
         const double local = atBeat - src.startBeat;
         if (local <= 0 || local >= src.lengthBeats) return -1;
         MidiClip left, right;
+        left.uid = src.uid; // the left half is the same clip, shortened; the right half is new (Uid.h)
         left.startBeat = src.startBeat;
         left.lengthBeats = local;
         right.startBeat = atBeat;
@@ -3572,6 +3573,54 @@ int32_t copyStr(const std::string& s, char* out, int32_t cap) {
     return static_cast<int32_t>(s.size());
 }
 } // namespace
+
+// The uid a clip index names: arrangement clips by index (MIDI on instrument tracks, audio on
+// the rest); a Session clip (index <= kSessionClipBase) is its slot's midi/audio member.
+static Uid* clipUidSlot(Track& t, int32_t clipIndex) {
+    if (const int32_t scene = sessionSceneOfClip(clipIndex); scene >= 0) {
+        if (scene >= static_cast<int32_t>(t.sessionSlots.size())) return nullptr;
+        auto& s = t.sessionSlots[static_cast<size_t>(scene)];
+        if (!s.hasClip) return nullptr;
+        return t.type() == TrackType::Instrument ? &s.midi.uid : &s.audio.uid;
+    }
+    if (t.type() == TrackType::Instrument) {
+        if (clipIndex < 0 || clipIndex >= static_cast<int32_t>(t.midiClips.size())) return nullptr;
+        return &t.midiClips[static_cast<size_t>(clipIndex)].uid;
+    }
+    if (clipIndex < 0 || clipIndex >= static_cast<int32_t>(t.clips.size())) return nullptr;
+    return &t.clips[static_cast<size_t>(clipIndex)].uid;
+}
+
+int32_t Engine::trackUid(int32_t trackId, char* out, int32_t cap) const {
+    auto t = findTrackAuthoring(trackId);
+    if (!t || t->uid.isNull()) return 0;
+    return copyStr(t->uid.toHex(), out, cap);
+}
+bool Engine::setTrackUid(int32_t trackId, const Uid& uid) {
+    auto old = findTrackAuthoring(trackId);
+    if (!old || uid.isNull()) return false;
+    auto nt = cloneTrack(*old);
+    nt->uid = uid;
+    republishWithTrackRaw(trackId, nt); // no undo entry: identity is not an edit
+    return true;
+}
+int32_t Engine::clipUid(int32_t trackId, int32_t clipIndex, char* out, int32_t cap) const {
+    auto t = findTrackAuthoring(trackId);
+    if (!t) return 0;
+    Uid* u = clipUidSlot(const_cast<Track&>(*t), clipIndex); // read only
+    if (!u || u->isNull()) return 0;
+    return copyStr(u->toHex(), out, cap);
+}
+bool Engine::setClipUid(int32_t trackId, int32_t clipIndex, const Uid& uid) {
+    auto old = findTrackAuthoring(trackId);
+    if (!old || uid.isNull()) return false;
+    auto nt = cloneTrack(*old);
+    Uid* u = clipUidSlot(*nt, clipIndex);
+    if (!u) return false;
+    *u = uid;
+    republishWithTrackRaw(trackId, nt);
+    return true;
+}
 
 bool Engine::setClipName(int32_t trackId, int32_t clipIndex, const std::string& name) {
     // A Session slot (SessionClip index, MIDI or audio): its name is the slot's.

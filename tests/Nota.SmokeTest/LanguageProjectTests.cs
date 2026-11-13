@@ -46,7 +46,9 @@ internal static class LanguageProjectTests
                 "a name typed by the user is saved as typed in either language");
             // The save time is the one allowed difference.
             string Strip(string m) => Regex.Replace(m, "\"(?:savedAt|SavedAt|saved|modified|Modified|createdAt|CreatedAt)\"\\s*:\\s*\"[^\"]*\"", "\"t\":\"\"");
-            yield return (Strip(manifests["en"]) == Strip(manifests["fr"]),
+            // Track and clip ids are random per engine by design (stable-ID work), so they are the other allowed difference.
+            string StripIds(string m) => Regex.Replace(Strip(m), "\"id\"\\s*:\\s*\"[0-9a-f]{32}\"", "\"id\":\"\"");
+            yield return (StripIds(manifests["en"]) == StripIds(manifests["fr"]),
                 "the same project saved in English and in French is the same file (SC-005)");
         }
         finally

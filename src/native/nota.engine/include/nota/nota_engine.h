@@ -1643,6 +1643,19 @@ NOTA_API int32_t    nota_session_slots_to_arrangement(NotaEngine* engine, const 
  * get_* write up to cap-1 chars + NUL into out and return the full length. */
 NOTA_API NotaResult nota_clip_set_name(NotaEngine* engine, int32_t track_id, int32_t clip_index, const char* name_utf8);
 NOTA_API int32_t    nota_clip_get_name(NotaEngine* engine, int32_t track_id, int32_t clip_index, char* out, int32_t cap);
+
+/* Stable identities (AGENT DAW P0). A track or clip carries a 128-bit id that survives edits,
+ * save/load, undo/redo and moves between machines. Ids are 32 lowercase hex chars, not NUL
+ * terminated in the count; `cap` must be >= 33 (room for the terminator). The getters return
+ * the number of chars written, or 0 for an unknown track/clip. The engine mints an id for every
+ * track and clip on its next publish, so a fresh object always has one. The setters restore a
+ * saved id on load (hex, exactly 32 digits): they create no undo entry, and an id already held
+ * by another object is re-minted for the later one on the next publish. clip_index addresses
+ * arrangement and Session clips exactly as nota_clip_set_name does. */
+NOTA_API int32_t    nota_track_get_uid(const NotaEngine* engine, int32_t track_id, char* out, int32_t cap);
+NOTA_API NotaResult nota_track_set_uid(NotaEngine* engine, int32_t track_id, const char* uid_hex);
+NOTA_API int32_t    nota_clip_get_uid(const NotaEngine* engine, int32_t track_id, int32_t clip_index, char* out, int32_t cap);
+NOTA_API NotaResult nota_clip_set_uid(NotaEngine* engine, int32_t track_id, int32_t clip_index, const char* uid_hex);
 NOTA_API NotaResult nota_track_set_name(NotaEngine* engine, int32_t track_id, const char* name_utf8);
 NOTA_API int32_t    nota_track_get_name(NotaEngine* engine, int32_t track_id, char* out, int32_t cap);
 NOTA_API NotaResult nota_track_set_color(NotaEngine* engine, int32_t track_id, int32_t color_index);

@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <unordered_set>
 #include <utility>
 
 namespace nota {
@@ -730,6 +731,7 @@ std::shared_ptr<Track> Engine::cloneTrack(const Track& t) const {
     nt->articulationTable = t.articulationTable;                     // articulation map (shared, immutable)
     nt->articulationMapJson = t.articulationMapJson;
     for (int b = 0; b < kMaxReturns; ++b) nt->setSend(b, t.send(b)); // M6-1: send levels
+    nt->uid = t.uid;     // stable identity survives every clone (Uid.h)
     nt->clips = t.clips;
     nt->takes = t.takes; // take lanes (specs/067) — buffers shared
     nt->midiClips = t.midiClips;
@@ -806,6 +808,59 @@ bool Engine::setRenderThreads(int n) {
     return true;
 }
 
+// Stable identities (Uid.h). Runs on every publish, message thread only.
+//   1. Tracks the playing graph shares are the audio thread's: never touched, but their ids are
+//      registered first so a copy can never take one.
+//   2. In every other track, a null id is minted and an id already seen (a duplicated or pasted
+//      clip, a split's right half, a duplicated track) is re-minted. First occurrence keeps it.
+// Session slots hold their clip as `midi` / `audio`; only a slot that has a clip gets ids.
+namespace {
+template <class F> void forEachClipUid(Track& t, F&& f) {
+    for (auto& c : t.clips) f(c.uid);
+    for (auto& c : t.midiClips) f(c.uid);
+    for (auto& s : t.sessionSlots) {
+        if (!s.hasClip) continue;
+        f(s.midi.uid);
+        f(s.audio.uid);
+    }
+}
+} // namespace
+
+void Engine::settleUids(Graph& g) {
+    std::unordered_set<Uid, Uid::Hash> seen;
+    auto playing = [&](const std::shared_ptr<Track>& t) {
+        if (!authoring_) return false;
+        if (authoring_->masterTrack && authoring_->masterTrack == t) return true;
+        for (const auto& old : authoring_->tracks)
+            if (old == t) return true;
+        return false;
+    };
+    std::vector<std::shared_ptr<Track>> all;
+    all.reserve(g.tracks.size() + 1);
+    for (auto& t : g.tracks) all.push_back(t);
+    if (g.masterTrack) all.push_back(g.masterTrack);
+    // Pass 1: immutable (shared) tracks register what they hold.
+    for (auto& t : all) {
+        if (!t || !playing(t)) continue;
+        if (!t->uid.isNull()) seen.insert(t->uid);
+        forEachClipUid(*t, [&](Uid& u) { if (!u.isNull()) seen.insert(u); });
+    }
+    // Pass 2: fresh tracks are settled in place.
+    for (auto& t : all) {
+        if (!t || playing(t)) continue;
+        if (t->uid.isNull() || !seen.insert(t->uid).second) {
+            t->uid = mintUid();
+            seen.insert(t->uid);
+        }
+        forEachClipUid(*t, [&](Uid& u) {
+            if (!u.isNull() && seen.insert(u).second) return;
+            // A non-clip session slot has only default members, so null ids stay null there.
+            u = mintUid();
+            seen.insert(u);
+        });
+    }
+}
+
 void Engine::publishRaw(std::shared_ptr<Graph> g, bool restored) {
     // Fade flags are derived, not stored. A track this graph shares with the one still
     // playing is the audio thread's — leave it. Any other one an edit just cloned is
@@ -852,6 +907,7 @@ void Engine::publishRaw(std::shared_ptr<Graph> g, bool restored) {
             settleArticulations(*t);
         }
     }
+    if (g) settleUids(*g); // stable ids (Uid.h): mint missing ones, re-mint copies
     authoring_ = g;
     if (g) ensureRenderScratch(g->tracks.size());
     // Fresh track objects only: the audio thread never sees them change. Before any CC target

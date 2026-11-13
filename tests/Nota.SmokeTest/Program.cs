@@ -597,6 +597,14 @@ if (args.Length >= 1 && args[0] == "--device-undo")
     Console.WriteLine(failures == 0 ? "DEVICE UNDO PASSED" : $"DEVICE UNDO FAILED ({failures})");
     return failures == 0 ? 0 : 1;
 }
+// Stable track/clip ids alone: `--object-ids`. Also part of the full run.
+if (args.Length >= 1 && args[0] == "--object-ids")
+{
+    Console.WriteLine("-- object ids --");
+    foreach (var (ok, label) in ObjectIdTests.Run()) Check(ok, label);
+    Console.WriteLine(failures == 0 ? "OBJECT IDS PASSED" : $"OBJECT IDS FAILED ({failures})");
+    return failures == 0 ? 0 : 1;
+}
 // Audio split fades alone: `--split-fades`. Also part of the full run.
 if (args.Length >= 1 && args[0] == "--split-fades")
 {
@@ -16000,6 +16008,8 @@ Console.WriteLine("-- stereo map --");
 foreach (var (ok, label) in StereoMeasureTests.Run()) Check(ok, label);
 Console.WriteLine("-- split fades --");
 foreach (var (ok, label) in SplitFadeTests.Run()) Check(ok, label);
+Console.WriteLine("-- object ids --");
+foreach (var (ok, label) in ObjectIdTests.Run()) Check(ok, label);
 Console.WriteLine("-- warp split --");
 foreach (var (ok, label) in WarpSplitTests.Run()) Check(ok, label);
 

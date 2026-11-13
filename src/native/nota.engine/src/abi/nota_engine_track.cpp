@@ -682,6 +682,22 @@ NotaResult nota_clip_set_name(NotaEngine* e, int32_t track_id, int32_t clip_inde
 int32_t nota_clip_get_name(NotaEngine* e, int32_t track_id, int32_t clip_index, char* out, int32_t cap) {
     return e ? CENG(e)->clipName(track_id, clip_index, out, cap) : 0;
 }
+int32_t nota_track_get_uid(const NotaEngine* e, int32_t track_id, char* out, int32_t cap) {
+    return (e && out && cap >= 33) ? CENG(e)->trackUid(track_id, out, cap) : 0;
+}
+NotaResult nota_track_set_uid(NotaEngine* e, int32_t track_id, const char* uid_hex) {
+    nota::Uid u;
+    if (!e || !nota::Uid::fromHex(uid_hex, &u) || u.isNull()) return NOTA_ERR_INVALID_ARG;
+    return ENG(e)->setTrackUid(track_id, u) ? NOTA_OK : NOTA_ERR_INVALID_ARG;
+}
+int32_t nota_clip_get_uid(const NotaEngine* e, int32_t track_id, int32_t clip_index, char* out, int32_t cap) {
+    return (e && out && cap >= 33) ? CENG(e)->clipUid(track_id, clip_index, out, cap) : 0;
+}
+NotaResult nota_clip_set_uid(NotaEngine* e, int32_t track_id, int32_t clip_index, const char* uid_hex) {
+    nota::Uid u;
+    if (!e || !nota::Uid::fromHex(uid_hex, &u) || u.isNull()) return NOTA_ERR_INVALID_ARG;
+    return ENG(e)->setClipUid(track_id, clip_index, u) ? NOTA_OK : NOTA_ERR_INVALID_ARG;
+}
 NotaResult nota_track_set_name(NotaEngine* e, int32_t track_id, const char* name) {
     if (!e) return NOTA_ERR_INVALID_ARG;
     return ENG(e)->setTrackName(track_id, name ? std::string(name) : std::string{}) ? NOTA_OK : NOTA_ERR_INVALID_ARG;
