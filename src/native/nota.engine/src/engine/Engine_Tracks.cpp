@@ -1762,7 +1762,8 @@ bool Engine::moveClipBlock(const std::vector<ClipMoveReq>& moves) {
     for (size_t i = 0; i < items.size(); ++i) itemOf[{items[i].req->srcTrackId, items[i].req->clipIndex}] = i;
     std::vector<int32_t> newIndex(items.size(), -1);
 
-    for (auto& [tid, nt] : clones) {
+    for (auto& [tid0, nt] : clones) {
+        const int32_t tid = tid0; // LOCAL-BUILD-ONLY: Apple clang 15 cannot capture a structured binding
         const auto& ranges = incoming[tid];
         auto rebuild = [&](auto& clips, auto carve) {
             std::remove_reference_t<decltype(clips)> out;
