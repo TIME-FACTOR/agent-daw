@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 
@@ -827,13 +828,16 @@ template <class F> void forEachClipUid(Track& t, F&& f) {
 } // namespace
 
 void Engine::settleUids(Graph& g) {
-    auto playing = [&](const std::shared_ptr<Track>& t) {
-        if (!authoring_) return false;
-        if (authoring_->masterTrack && authoring_->masterTrack == t) return true;
-        for (const auto& old : authoring_->tracks)
-            if (old == t) return true;
-        return false;
-    };
+    // Tracks the playing graph holds, by pointer: one pass here, O(1) per lookup below.
+    std::unordered_set<const Track*> held;
+    std::unordered_map<int32_t, const Track*> oldById;
+    if (authoring_) {
+        held.reserve(authoring_->tracks.size() + 1);
+        oldById.reserve(authoring_->tracks.size());
+        for (const auto& old : authoring_->tracks) { held.insert(old.get()); oldById[old->id()] = old.get(); }
+        if (authoring_->masterTrack) { held.insert(authoring_->masterTrack.get()); oldById[kMasterTrackId] = authoring_->masterTrack.get(); }
+    }
+    auto playing = [&](const std::shared_ptr<Track>& t) { return t && held.count(t.get()) != 0; };
     std::vector<std::shared_ptr<Track>> all;
     all.reserve(g.tracks.size() + 1);
     for (auto& t : g.tracks) all.push_back(t);
@@ -860,11 +864,8 @@ void Engine::settleUids(Graph& g) {
     // changed track). Only an id that is NEW to its track (an add, paste, cross-track move, or
     // restore) needs a project-wide check, and only then are the other tracks scanned.
     auto oldOf = [&](const Track& t) -> const Track* {
-        if (!authoring_) return nullptr;
-        if (t.id() == kMasterTrackId) return authoring_->masterTrack.get();
-        for (const auto& o : authoring_->tracks)
-            if (o->id() == t.id()) return o.get();
-        return nullptr;
+        auto it = oldById.find(t.id());
+        return it == oldById.end() ? nullptr : it->second;
     };
     std::vector<Uid*> pending; // ids to check against the rest of the project
     std::unordered_set<Uid, Uid::Hash> vouched; // ids in fresh tracks known not to collide
