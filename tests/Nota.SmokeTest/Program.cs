@@ -598,6 +598,13 @@ if (args.Length >= 1 && args[0] == "--device-undo")
     return failures == 0 ? 0 : 1;
 }
 if (args.Length >= 1 && args[0] == "--publish-cost") { PublishCostProbe.Run(); return 0; }
+if (args.Length >= 1 && args[0] == "--manifest")
+{
+    Console.WriteLine("-- manifest --");
+    foreach (var (ok, label) in ManifestTests.Run()) Check(ok, label);
+    Console.WriteLine(failures == 0 ? "MANIFEST PASSED" : $"MANIFEST FAILED ({failures})");
+    return failures == 0 ? 0 : 1;
+}
 // Stable track/clip ids alone: `--object-ids`. Also part of the full run.
 if (args.Length >= 1 && args[0] == "--object-ids")
 {
@@ -16011,6 +16018,8 @@ Console.WriteLine("-- split fades --");
 foreach (var (ok, label) in SplitFadeTests.Run()) Check(ok, label);
 Console.WriteLine("-- object ids --");
 foreach (var (ok, label) in ObjectIdTests.Run()) Check(ok, label);
+Console.WriteLine("-- manifest --");
+foreach (var (ok, label) in ManifestTests.Run()) Check(ok, label);
 Console.WriteLine("-- warp split --");
 foreach (var (ok, label) in WarpSplitTests.Run()) Check(ok, label);
 

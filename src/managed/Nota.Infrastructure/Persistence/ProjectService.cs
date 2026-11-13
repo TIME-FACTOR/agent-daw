@@ -1168,6 +1168,11 @@ public sealed class ProjectService
     /// autosave to detect whether the project changed since the last snapshot (M7-7).</summary>
     public static string SerializeManifest(ProjectDocument doc) => JsonSerializer.Serialize(doc, JsonOpts);
 
+    /// <summary>Deserializes a project JSON tree (already at the current format) with the same options Load uses.
+    /// For the collaboration manifest codec (<see cref="ProjectManifest"/>).</summary>
+    internal static ProjectDocument FromJson(JsonObject root)
+        => root.Deserialize<ProjectDocument>(JsonOpts) ?? throw new InvalidDataException("Empty or invalid project.");
+
     /// <summary>Reads and validates the document from a `.nota` bundle folder.</summary>
     public static ProjectDocument Load(string bundleDir)
     {
