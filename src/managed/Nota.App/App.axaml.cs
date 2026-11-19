@@ -60,6 +60,7 @@ public partial class App : Avalonia.Application
         services.AddSingleton<IPresetLibrary, PresetLibrary>();
         services.AddSingleton<IProjectStore, ProjectStore>();
         services.AddSingleton<IProjectHistory>(_ => new ProjectHistory(AppInfo.Version));
+        services.AddSingleton<ICollaborationPort, CollaborationService>(); // AGENT DAW local collaboration contract (P0-7)
         services.AddSingleton<IPresetStore, PresetStore>();
         services.AddSingleton<Nota.Application.Articulations.IArticulationLibrary>(_ => new Nota.Infrastructure.Articulations.ArticulationLibraryStore());   // specs/085
         services.AddSingleton<IFactoryPresets, FactoryPresetCatalog>();

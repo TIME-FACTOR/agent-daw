@@ -92,7 +92,7 @@ public sealed class McpService(
     IAudioExporter exporter, IMidiDeviceService midiDevices, MidiLearnService midiLearn, IDrumKits drumKits,
     ProjectVersionsBridge projectVersions, IProjectHistory projectHistory, IModelStore models, IClipAi clipAi,
     ISampleIndex sampleIndex, Nota.Presentation.TransportViewModel transport, IMosaicPacks mosaicPacks,
-    IProcessCpu processCpu)
+    IProcessCpu processCpu, ICollaborationPort collab)
 {
     private readonly NotaMcpServer _server = new();
 
@@ -118,6 +118,7 @@ public sealed class McpService(
         s.AddSingleton(sampleIndex);
         s.AddSingleton(mosaicPacks);
         s.AddSingleton(processCpu);
+        s.AddSingleton(collab); // AGENT DAW local collaboration contract (P0-7)
         s.AddSingleton<IProjectKeyAccess>(new ProjectKeyAccess(transport));
         s.AddSingleton<IThemeAccess>(new ThemeAccess());
     }
