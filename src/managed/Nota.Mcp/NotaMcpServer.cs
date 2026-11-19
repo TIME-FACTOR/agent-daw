@@ -47,6 +47,7 @@ public sealed class NotaMcpServer : IAsyncDisposable
 
         var app = builder.Build();
         app.MapMcp();                                        // Streamable HTTP endpoint at "/"
+        if (engine is IOutputTapSource tap) TapStream.Map(app, tap);   // /audio/tap: the live mix for a local host program (Listen Together)
 
         await app.StartAsync();
         _app = app;

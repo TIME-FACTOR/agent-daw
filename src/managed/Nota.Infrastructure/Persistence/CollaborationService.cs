@@ -21,7 +21,7 @@ public sealed class CollaborationService : ICollaborationPort
     public const int MaxManifestBytes = 64 * 1024 * 1024;
 
     public CollabInfo Info() => new(Api, ProjectManifest.Schema, ProjectService.CurrentFormatVersion,
-        new[] { "manifest.export", "manifest.check", "manifest.apply", "stable-ids" });
+        new[] { "manifest.export", "manifest.check", "manifest.apply", "stable-ids", "audio.tap.http" });
 
     public string ExportManifest(string bundleDir, string projectId, string? version)
     {

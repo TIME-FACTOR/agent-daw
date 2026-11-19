@@ -598,6 +598,13 @@ if (args.Length >= 1 && args[0] == "--device-undo")
     return failures == 0 ? 0 : 1;
 }
 if (args.Length >= 1 && args[0] == "--publish-cost") { PublishCostProbe.Run(); return 0; }
+if (args.Length >= 1 && args[0] == "--tap-stream")
+{
+    Console.WriteLine("-- tap stream --");
+    foreach (var (ok, label) in TapStreamTests.Run()) Check(ok, label);
+    Console.WriteLine(failures == 0 ? "TAP STREAM PASSED" : $"TAP STREAM FAILED ({failures})");
+    return failures == 0 ? 0 : 1;
+}
 if (args.Length >= 1 && args[0] == "--atomic-apply")
 {
     Console.WriteLine("-- atomic apply --");
@@ -16056,6 +16063,8 @@ Console.WriteLine("-- output tap --");
 foreach (var (ok, label) in OutputTapTests.Run()) Check(ok, label);
 Console.WriteLine("-- atomic apply --");
 foreach (var (ok, label) in AtomicApplyTests.Run()) Check(ok, label);
+Console.WriteLine("-- tap stream --");
+foreach (var (ok, label) in TapStreamTests.Run()) Check(ok, label);
 Console.WriteLine("-- warp split --");
 foreach (var (ok, label) in WarpSplitTests.Run()) Check(ok, label);
 

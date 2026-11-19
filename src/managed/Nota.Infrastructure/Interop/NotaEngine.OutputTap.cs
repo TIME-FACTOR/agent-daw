@@ -3,7 +3,7 @@
 
 namespace Nota.Infrastructure;
 
-public sealed partial class NotaEngine
+public sealed partial class NotaEngine : Nota.Application.IOutputTapSource
 {
     // --- Output tap (AGENT DAW Listen Together) ---------------------------------------------------------
 
