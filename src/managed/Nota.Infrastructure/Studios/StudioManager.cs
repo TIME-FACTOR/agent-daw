@@ -12,14 +12,10 @@ using Nota.Application;
 
 namespace Nota.Infrastructure.Studios;
 
-public enum Studio { My, Shared }
-
 /// <summary>Where the last switch spent its time: applying a queued master, stopping the old studio's audio, starting the new one's.</summary>
 public sealed record SwitchTiming(TimeSpan ApplyPending, TimeSpan StopOld, TimeSpan StartNew);
 
-public sealed record SharedUpdateResult(bool Applied, bool Queued, string[] Errors, string[] Warnings, int Tracks);
-
-public sealed class StudioManager : IDisposable
+public sealed class StudioManager : IStudioHost, IDisposable
 {
     private readonly IAudioEngine _my;
     private readonly IAudioEngine _sharedRaw;

@@ -598,6 +598,13 @@ if (args.Length >= 1 && args[0] == "--device-undo")
     return failures == 0 ? 0 : 1;
 }
 if (args.Length >= 1 && args[0] == "--publish-cost") { PublishCostProbe.Run(); return 0; }
+if (args.Length >= 1 && args[0] == "--studios-vm")
+{
+    Console.WriteLine("-- studios view-model --");
+    foreach (var (ok, label) in StudiosViewModelTests.Run()) Check(ok, label);
+    Console.WriteLine(failures == 0 ? "STUDIOS VM PASSED" : $"STUDIOS VM FAILED ({failures})");
+    return failures == 0 ? 0 : 1;
+}
 if (args.Length >= 1 && args[0] == "--tap-stream")
 {
     Console.WriteLine("-- tap stream --");
@@ -16065,6 +16072,8 @@ Console.WriteLine("-- atomic apply --");
 foreach (var (ok, label) in AtomicApplyTests.Run()) Check(ok, label);
 Console.WriteLine("-- tap stream --");
 foreach (var (ok, label) in TapStreamTests.Run()) Check(ok, label);
+Console.WriteLine("-- studios view-model --");
+foreach (var (ok, label) in StudiosViewModelTests.Run()) Check(ok, label);
 Console.WriteLine("-- warp split --");
 foreach (var (ok, label) in WarpSplitTests.Run()) Check(ok, label);
 
