@@ -598,6 +598,13 @@ if (args.Length >= 1 && args[0] == "--device-undo")
     return failures == 0 ? 0 : 1;
 }
 if (args.Length >= 1 && args[0] == "--publish-cost") { PublishCostProbe.Run(); return 0; }
+if (args.Length >= 1 && args[0] == "--studios")
+{
+    Console.WriteLine("-- studios --");
+    foreach (var (ok, label) in StudioTests.Run()) Check(ok, label);
+    Console.WriteLine(failures == 0 ? "STUDIOS PASSED" : $"STUDIOS FAILED ({failures})");
+    return failures == 0 ? 0 : 1;
+}
 if (args.Length >= 1 && args[0] == "--collab-tools")
 {
     Console.WriteLine("-- collab tools --");
@@ -16029,6 +16036,8 @@ Console.WriteLine("-- manifest --");
 foreach (var (ok, label) in ManifestTests.Run()) Check(ok, label);
 Console.WriteLine("-- collab tools --");
 foreach (var (ok, label) in CollabToolsTests.Run()) Check(ok, label);
+Console.WriteLine("-- studios --");
+foreach (var (ok, label) in StudioTests.Run()) Check(ok, label);
 Console.WriteLine("-- warp split --");
 foreach (var (ok, label) in WarpSplitTests.Run()) Check(ok, label);
 
