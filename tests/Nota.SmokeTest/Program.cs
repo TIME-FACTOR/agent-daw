@@ -598,6 +598,13 @@ if (args.Length >= 1 && args[0] == "--device-undo")
     return failures == 0 ? 0 : 1;
 }
 if (args.Length >= 1 && args[0] == "--publish-cost") { PublishCostProbe.Run(); return 0; }
+if (args.Length >= 1 && args[0] == "--atomic-apply")
+{
+    Console.WriteLine("-- atomic apply --");
+    foreach (var (ok, label) in AtomicApplyTests.Run()) Check(ok, label);
+    Console.WriteLine(failures == 0 ? "ATOMIC APPLY PASSED" : $"ATOMIC APPLY FAILED ({failures})");
+    return failures == 0 ? 0 : 1;
+}
 if (args.Length >= 1 && args[0] == "--output-tap")
 {
     Console.WriteLine("-- output tap --");
@@ -16047,6 +16054,8 @@ Console.WriteLine("-- studios --");
 foreach (var (ok, label) in StudioTests.Run()) Check(ok, label);
 Console.WriteLine("-- output tap --");
 foreach (var (ok, label) in OutputTapTests.Run()) Check(ok, label);
+Console.WriteLine("-- atomic apply --");
+foreach (var (ok, label) in AtomicApplyTests.Run()) Check(ok, label);
 Console.WriteLine("-- warp split --");
 foreach (var (ok, label) in WarpSplitTests.Run()) Check(ok, label);
 

@@ -49,9 +49,11 @@ public sealed class CollabTools(IAudioEngine engine, IEngineDispatch dispatch, I
     [McpServerTool(Name = "collab_check_manifest"), Description(
         "Validate a manifest without changing anything: schema and format problems, warnings (such as a reference to a track that "
         + "is gone), the track count, and, when bundlePath is given, which of its asset files are missing from that .nota folder or "
-        + "fail their sha256 (so the caller knows exactly what to fetch).")]
+        + "fail their sha256 (so the caller knows exactly what to fetch). When the DAW is configured with NOTA_MCP_ROOTS, bundlePath must lie inside one of those folders.")]
     public Task<ManifestCheck> CheckManifest(string manifestJson, string? bundlePath = null)
-        => Task.FromResult(collab.Check(manifestJson, bundlePath));
+        => Task.FromResult(bundlePath is not null && PathRoots.Refusal(bundlePath) is { } why
+            ? new ManifestCheck(false, new[] { why }, Array.Empty<string>(), 0, Array.Empty<string>(), Array.Empty<string>())
+            : collab.Check(manifestJson, bundlePath));
 
     [McpServerTool(Name = "collab_apply_manifest"), Description(
         "Replace the OPEN project with the one in a manifest, reading its assets from bundlePath (a .nota folder that already holds "
@@ -63,6 +65,7 @@ public sealed class CollabTools(IAudioEngine engine, IEngineDispatch dispatch, I
         if (!confirmReplace) return new ManifestApplyResult(false, new[] { "confirmReplace must be true: applying replaces the open project" }, Array.Empty<string>(), 0);
         if (await Read(() => project.HasUnsavedChanges) && !discardUnsaved)
             return new ManifestApplyResult(false, new[] { "the open project has unsaved edits; save them or pass discardUnsaved = true" }, Array.Empty<string>(), 0);
+        if (PathRoots.Refusal(bundlePath) is { } why) return new ManifestApplyResult(false, new[] { why }, Array.Empty<string>(), 0);
         if (!Directory.Exists(bundlePath)) return new ManifestApplyResult(false, new[] { $"bundlePath does not exist: {bundlePath}" }, Array.Empty<string>(), 0);
         return await Mutate(() => collab.Apply(E, manifestJson, bundlePath));
     }

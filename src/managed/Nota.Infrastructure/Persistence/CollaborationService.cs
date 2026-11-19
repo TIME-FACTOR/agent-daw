@@ -38,6 +38,14 @@ public sealed class CollaborationService : ICollaborationPort
             import.Document.Tracks.Count, missing.ToArray(), corrupt.ToArray());
     }
 
+    /// <summary>Warnings that mean audio the manifest names could not be loaded. Applying with such a loss would leave a
+    /// project with holes in it, so it is refused and rolled back. (A plugin that is not installed is deliberately NOT
+    /// here: that is expected, and the contribution is heard through its frozen audio.)</summary>
+    private static bool LosesAudio(string warning) => warning.StartsWith("Couldn't reload", StringComparison.Ordinal)
+                                                    || warning.StartsWith("A referenced sample was missing", StringComparison.Ordinal);
+
+    /// <summary>All or nothing: either the manifest's project is now loaded, or the engine holds exactly what it held before.
+    /// The previous project is saved to a temporary bundle first and put back on any exception or lost audio.</summary>
     public ManifestApplyResult Apply(IAudioEngine engine, string manifestJson, string bundleDir)
     {
         var check = Check(manifestJson, bundleDir);
@@ -47,8 +55,45 @@ public sealed class CollaborationService : ICollaborationPort
             return new ManifestApplyResult(false, why, check.Warnings, 0);
         }
         var import = TryImport(manifestJson).Import!; // parsed once already; cannot fail now
-        var warnings = import.Warnings.Concat(ProjectService.Apply(import.Document, engine, bundleDir)).ToArray();
-        return new ManifestApplyResult(true, Array.Empty<string>(), warnings, import.Document.Tracks.Count);
+
+        string? backup = null;
+        try
+        {
+            if (engine.TrackCount > 0)
+            {
+                backup = Path.Combine(Path.GetTempPath(), "nota-apply-backup-" + Guid.NewGuid().ToString("N"));
+                var snapshot = ProjectService.Capture(engine, new TransportState(engine.Bpm, 1.0, false, false), new List<string>());
+                ProjectService.Save(snapshot, backup, engine);
+            }
+            string[] applyWarnings;
+            try { applyWarnings = ProjectService.Apply(import.Document, engine, bundleDir).ToArray(); }
+            catch (Exception e) when (e is not OutOfMemoryException)
+            {
+                return RolledBack(engine, backup, $"applying failed ({e.GetType().Name}: {e.Message})", import.Warnings);
+            }
+            var lost = applyWarnings.Where(LosesAudio).ToArray();
+            if (lost.Length > 0) return RolledBack(engine, backup, "audio could not be loaded: " + string.Join("; ", lost), import.Warnings.Concat(applyWarnings));
+            return new ManifestApplyResult(true, Array.Empty<string>(), import.Warnings.Concat(applyWarnings).ToArray(), import.Document.Tracks.Count);
+        }
+        finally
+        {
+            if (backup is not null) try { Directory.Delete(backup, true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
+    }
+
+    private static ManifestApplyResult RolledBack(IAudioEngine engine, string? backup, string reason, IEnumerable<string> warnings)
+    {
+        string note = "the previous project was restored";
+        try
+        {
+            if (backup is not null) ProjectService.Apply(ProjectService.Load(backup), engine, backup);
+            else engine.Reset();
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            note = $"the previous project could NOT be restored ({e.GetType().Name}: {e.Message}); reopen it from disk";
+        }
+        return new ManifestApplyResult(false, new[] { $"{reason}; {note}" }, warnings.ToArray(), 0);
     }
 
     // --- helpers -------------------------------------------------------------------------------------

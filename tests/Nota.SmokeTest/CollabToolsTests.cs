@@ -124,6 +124,38 @@ internal static class CollabToolsTests
             for (int i = 0; other.TryGetTrackInfo(i, out var ti); i++) otherIds.Add(other.GetTrackUid(ti.Id));
             results.Add((onOther.Applied && otherIds.Count == 2 && otherIds[0] == manifest["root"]!["lists"]!["tracks"]![0]!["id"]!.GetValue<string>(),
                 "a different engine applying the same manifest ends up with the same track ids"));
+
+            // ---- folder confinement (P0-8) ---------------------------------------------------------------------------------
+            {
+                string allowed = Path.Combine(root, "allowed"); Directory.CreateDirectory(allowed);
+                string outside = Path.Combine(root, "outside"); Directory.CreateDirectory(outside);
+                string inside = Path.Combine(allowed, "ok.nota"); Directory.CreateDirectory(inside);
+                string viaDots = Path.Combine(allowed, "..", "outside");
+                string sibling = allowed + "-evil"; Directory.CreateDirectory(sibling);   // shares the root as a text prefix
+                string link = Path.Combine(allowed, "escape");
+                bool canLink = true;
+                try { Directory.CreateSymbolicLink(link, outside); } catch (Exception) { canLink = false; }
+                var prior = Environment.GetEnvironmentVariable(Nota.Mcp.PathRoots.Variable);
+                try
+                {
+                    Environment.SetEnvironmentVariable(Nota.Mcp.PathRoots.Variable, null);
+                    var open = tools.CheckManifest(json, outside).Result;
+                    Environment.SetEnvironmentVariable(Nota.Mcp.PathRoots.Variable, allowed);
+                    var okInside = tools.CheckManifest(json, inside).Result.Errors.Length == 0;
+                    var refused = tools.CheckManifest(json, outside).Result;
+                    var dots = tools.CheckManifest(json, viaDots).Result;
+                    window.HasUnsavedChanges = false;     // an earlier step left it set; the path must be refused on its own merits
+                    var applyRefused = tools.ApplyManifest(json, outside, confirmReplace: true).Result;
+                    bool siblingRefused = tools.CheckManifest(json, sibling).Result.Errors.Any(x => x.Contains("outside"));
+                    bool symlinkRefused = !canLink || tools.CheckManifest(json, Path.Combine(link, "x")).Result.Errors.Any(x => x.Contains("outside"));
+                    results.Add((open.Errors.Length == 0 && okInside, "with no roots configured nothing changes; a path inside a configured root is accepted"));
+                    results.Add((!refused.Ok && refused.Errors[0].Contains("outside") && !dots.Ok && dots.Errors[0].Contains("outside") && !applyRefused.Applied && applyRefused.Errors[0].Contains("outside"),
+                        "a path outside the configured roots, or reached through .., is refused by check and apply"));
+                    results.Add((siblingRefused, "a folder that merely starts with the root's name (allowed-evil next to allowed) is refused"));
+                    results.Add((symlinkRefused, canLink ? "a symbolic link inside a root that points outside it is refused" : "(symlinks not creatable here: link case skipped)"));
+                }
+                finally { Environment.SetEnvironmentVariable(Nota.Mcp.PathRoots.Variable, prior); }
+            }
         }
         finally { try { Directory.Delete(root, true); } catch { } }
         foreach (var r in results) yield return r;
