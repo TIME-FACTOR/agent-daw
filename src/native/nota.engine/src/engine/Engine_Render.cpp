@@ -967,6 +967,7 @@ void Engine::render(float* out, float* cue, int32_t numFrames) {
     const auto t0 = std::chrono::steady_clock::now();
     deviceBlock_ = true; // a deadline, whatever the gap since the last block
     processBlock(out, cue, numFrames);
+    outputTap_.write(out, numFrames); // wait-free; a no-op unless a host program enabled the tap
     // DSP load = render time / block budget, smoothed (Phase 11). Live-device
     // path only; renderOffline stays untimed.
     const double sr = sampleRate();

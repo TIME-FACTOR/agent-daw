@@ -255,6 +255,18 @@ NOTA_API NotaResult nota_engine_set_frequency(NotaEngine* engine, float hz);
 /* Current output sample rate (0 if not started). Informational. */
 NOTA_API double nota_engine_sample_rate(const NotaEngine* engine);
 
+/* ---- Output tap (AGENT DAW, Listen Together) --------------------------------------------------
+ * The rendered master mix of the LIVE device path, for a host program that streams it. Stereo interleaved
+ * float32 at nota_engine_sample_rate. Single consumer thread; the audio thread only ever writes, wait-free.
+ * If the consumer falls behind the audio thread drops what does not fit and counts it
+ * (nota_output_tap_dropped): an increase means a gap in the stream. Enabling discards buffered audio and
+ * zeroes the counter. Offline bounces never feed the tap. */
+NOTA_API NotaResult nota_output_tap_enable(NotaEngine* engine, int32_t enabled);
+/* Copies up to max_frames frames (2 floats each) into out; returns how many were copied (0 = nothing yet). */
+NOTA_API int32_t    nota_output_tap_read(NotaEngine* engine, float* out_interleaved_stereo, int32_t max_frames);
+NOTA_API uint64_t   nota_output_tap_dropped(const NotaEngine* engine);
+NOTA_API int32_t    nota_output_tap_capacity_frames(const NotaEngine* engine);
+
 /* 1 while the output device is open and the audio thread runs (between a successful
  * nota_engine_start and nota_engine_stop), else 0. Offline work that stops the backend
  * reads it first so it restarts only what was running. */

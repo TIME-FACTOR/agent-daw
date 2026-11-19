@@ -598,6 +598,13 @@ if (args.Length >= 1 && args[0] == "--device-undo")
     return failures == 0 ? 0 : 1;
 }
 if (args.Length >= 1 && args[0] == "--publish-cost") { PublishCostProbe.Run(); return 0; }
+if (args.Length >= 1 && args[0] == "--output-tap")
+{
+    Console.WriteLine("-- output tap --");
+    foreach (var (ok, label) in OutputTapTests.Run()) Check(ok, label);
+    Console.WriteLine(failures == 0 ? "OUTPUT TAP PASSED" : $"OUTPUT TAP FAILED ({failures})");
+    return failures == 0 ? 0 : 1;
+}
 if (args.Length >= 1 && args[0] == "--studios")
 {
     Console.WriteLine("-- studios --");
@@ -16038,6 +16045,8 @@ Console.WriteLine("-- collab tools --");
 foreach (var (ok, label) in CollabToolsTests.Run()) Check(ok, label);
 Console.WriteLine("-- studios --");
 foreach (var (ok, label) in StudioTests.Run()) Check(ok, label);
+Console.WriteLine("-- output tap --");
+foreach (var (ok, label) in OutputTapTests.Run()) Check(ok, label);
 Console.WriteLine("-- warp split --");
 foreach (var (ok, label) in WarpSplitTests.Run()) Check(ok, label);
 

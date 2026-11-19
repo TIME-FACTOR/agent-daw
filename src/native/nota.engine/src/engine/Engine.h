@@ -17,6 +17,7 @@
 #include "CommandQueue.h"
 #include "engine/AudioThreadPool.h"
 #include "engine/CaptureRing.h"
+#include "engine/OutputTap.h"
 #include "engine/SnapshotHistory.h"
 #include "EngineTypes.h" // queue payloads, undo model, control events (from this header)
 #include "Graph.h"
@@ -177,6 +178,8 @@ class Engine {
 
     // --- DSP load (Phase 11): RT render time / block budget, smoothed 0..1 ---
     float cpuLoad() const { return cpuLoad_.load(std::memory_order_relaxed); }
+    // The rendered master mix for a host program (OutputTap.h). Live device path only; never fed by an offline bounce.
+    OutputTap& outputTap() { return outputTap_; }
     // Parallel render threads (the audio thread helps too): n < 0 = default, 0 = none.
     // Device stopped only (message thread); false while it runs.
     bool setRenderThreads(int n);
@@ -1967,6 +1970,7 @@ class Engine {
     std::atomic<bool> recording_{false};
     std::atomic<int32_t> xruns_{0};    // device dropouts since launch (M7-8)
     std::atomic<float> cpuLoad_{0.0f}; // smoothed RT DSP load 0..1 (Phase 11)
+    OutputTap outputTap_;              // wait-free master tap (AGENT DAW spike S2)
     // Set by start() before the device opens, cleared (release) once every node is re-prepared
     // at the negotiated rate: while set, render() outputs silence and never touches the graph.
     std::atomic<bool> renderSuspended_{false};

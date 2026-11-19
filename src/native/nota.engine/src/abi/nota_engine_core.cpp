@@ -82,6 +82,22 @@ double nota_engine_sample_rate(const NotaEngine* engine) {
     return reinterpret_cast<const Engine*>(engine)->sampleRate();
 }
 
+NotaResult nota_output_tap_enable(NotaEngine* engine, int32_t enabled) {
+    if (!engine) return NOTA_ERR_INVALID_ARG;
+    reinterpret_cast<Engine*>(engine)->outputTap().setEnabled(enabled != 0);
+    return NOTA_OK;
+}
+int32_t nota_output_tap_read(NotaEngine* engine, float* out, int32_t max_frames) {
+    if (!engine || !out || max_frames <= 0) return 0;
+    return static_cast<int32_t>(reinterpret_cast<Engine*>(engine)->outputTap().read(out, static_cast<uint32_t>(max_frames)));
+}
+uint64_t nota_output_tap_dropped(const NotaEngine* engine) {
+    return engine ? const_cast<Engine*>(reinterpret_cast<const Engine*>(engine))->outputTap().dropped() : 0;
+}
+int32_t nota_output_tap_capacity_frames(const NotaEngine* engine) {
+    return engine ? static_cast<int32_t>(nota::OutputTap::kCapacityFrames) : 0;
+}
+
 int32_t nota_engine_is_running(const NotaEngine* engine) {
     if (!engine) return 0;
     return reinterpret_cast<const Engine*>(engine)->isRunning() ? 1 : 0;

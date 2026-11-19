@@ -39,7 +39,7 @@
   "reserved_not_implemented": [
     "events.view (playhead, selection, viewport)",
     "transport.sync",
-    "audio.tap (master output tap for Listen Together)",
+    "audio.tap (the engine has a master output tap, spike S2; no local streaming endpoint exposes it yet)",
     "studios.switch (My Studio / Shared Studio)"
   ],
   "rules": [
