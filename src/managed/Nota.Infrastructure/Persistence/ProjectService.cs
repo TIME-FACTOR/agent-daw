@@ -1356,8 +1356,9 @@ public sealed class ProjectService
         }
     }
 
+    // A name in a project file is untrusted (it may come from another producer): see BundlePaths.
     private static string ResolveInBundle(string bundleDir, string relative)
-        => Path.Combine(bundleDir, relative.Replace('/', Path.DirectorySeparatorChar));
+        => BundlePaths.ResolveOrBlocked(bundleDir, relative);
 
     // Does a hosted plugin still expose a parameter with this stable id? (M9-B4)
     private static bool PluginParamExists(IAudioEngine engine, int trackId, int deviceIndex, string paramId)

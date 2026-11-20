@@ -33,9 +33,16 @@ public sealed class CollaborationService : ICollaborationPort
     {
         var (import, errors) = TryImport(manifestJson);
         if (import is null) return new ManifestCheck(false, errors, Array.Empty<string>(), 0, Array.Empty<string>(), Array.Empty<string>());
-        var (missing, corrupt) = bundleDir is null ? (new List<string>(), new List<string>()) : VerifyBlobs(manifestJson, bundleDir);
-        return new ManifestCheck(missing.Count == 0 && corrupt.Count == 0, Array.Empty<string>(), import.Warnings.ToArray(),
-            import.Document.Tracks.Count, missing.ToArray(), corrupt.ToArray());
+        try
+        {
+            var (missing, corrupt) = bundleDir is null ? (new List<string>(), new List<string>()) : VerifyBlobs(manifestJson, bundleDir);
+            return new ManifestCheck(missing.Count == 0 && corrupt.Count == 0, Array.Empty<string>(), import.Warnings.ToArray(),
+                import.Document.Tracks.Count, missing.ToArray(), corrupt.ToArray());
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            return new ManifestCheck(false, new[] { $"the manifest's assets could not be checked ({e.GetType().Name})" }, import.Warnings.ToArray(), 0, Array.Empty<string>(), Array.Empty<string>());
+        }
     }
 
     /// <summary>Warnings that mean audio the manifest names could not be loaded. Applying with such a loss would leave a
@@ -107,9 +114,11 @@ public sealed class CollaborationService : ICollaborationPort
             if (node is null) return (null, new[] { "manifest is not a JSON object" });
             return (ProjectManifest.Import(node), Array.Empty<string>());
         }
-        catch (Exception e) when (e is JsonException or InvalidDataException or NotSupportedException or InvalidOperationException or KeyNotFoundException or FormatException)
+        catch (Exception e) when (e is not OutOfMemoryException)
         {
-            return (null, new[] { e.Message });
+            // Hostile or malformed JSON can fail in many ways (a null where an object was expected, a number out of range, a wrong
+            // type). Whatever the way, the answer is "this manifest is not usable", never a crash of the tool that checked it.
+            return (null, new[] { e is JsonException or InvalidDataException or NotSupportedException or InvalidOperationException or KeyNotFoundException or FormatException ? e.Message : $"the manifest could not be read ({e.GetType().Name})" });
         }
     }
 
@@ -119,14 +128,13 @@ public sealed class CollaborationService : ICollaborationPort
         var missing = new List<string>(); var corrupt = new List<string>();
         var blobs = (JsonNode.Parse(manifestJson) as JsonObject)?["root"]?["blobs"] as JsonObject;
         if (blobs is null) return (missing, corrupt);
-        string full = Path.GetFullPath(bundleDir);
         foreach (var kv in blobs)
         {
-            string file = Path.GetFullPath(Path.Combine(full, kv.Key));
-            if (!file.StartsWith(full + Path.DirectorySeparatorChar, StringComparison.Ordinal) || !File.Exists(file)) { missing.Add(kv.Key); continue; }
+            string? file = BundlePaths.Resolve(bundleDir, kv.Key);
+            if (file is null || !File.Exists(file)) { missing.Add(kv.Key); continue; }
             using var fs = File.OpenRead(file);
             string actual = "sha256:" + System.Convert.ToHexString(SHA256.HashData(fs)).ToLowerInvariant();
-            if (!string.Equals(actual, kv.Value?.GetValue<string>(), StringComparison.Ordinal)) corrupt.Add(kv.Key);
+            if (kv.Value is not JsonValue hv || !hv.TryGetValue<string>(out var want) || !string.Equals(actual, want, StringComparison.Ordinal)) corrupt.Add(kv.Key);
         }
         return (missing, corrupt);
     }

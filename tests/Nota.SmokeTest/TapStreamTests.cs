@@ -94,6 +94,42 @@ internal static class TapStreamTests
             results.Add((last == HttpStatusCode.OK, "once the listener disconnects (within 5 s: the server notices a closed connection late), a new one is accepted"));
         }
         finally { server.StopAsync().GetAwaiter().GetResult(); }
+
+        // ---- a listener that connects and then stops reading must not hold the slot forever ------------------------------
+        int port2 = 23000 + Random.Shared.Next(2000);
+        var server2 = new NotaMcpServer();
+        int savedTimeout = TapStream.WriteTimeoutMs;
+        TapStream.WriteTimeoutMs = 1000;
+        server2.StartAsync(e, new SyncDispatch(), new NoRefresh(), port2).GetAwaiter().GetResult();
+        try
+        {
+            var handler = new SocketsHttpHandler
+            {
+                ConnectCallback = async (ctx, ct) =>
+                {
+                    var socket = new System.Net.Sockets.Socket(System.Net.Sockets.SocketType.Stream, System.Net.Sockets.ProtocolType.Tcp) { ReceiveBufferSize = 1024, NoDelay = true };
+                    await socket.ConnectAsync(ctx.DnsEndPoint, ct);
+                    return new System.Net.Sockets.NetworkStream(socket, ownsSocket: true);
+                },
+            };
+            using var stalled = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(60) };
+            string url2 = $"http://127.0.0.1:{port2}/audio/tap";
+            e.Seek(0); e.Play();
+            using var first = stalled.GetAsync(url2, HttpCompletionOption.ResponseHeadersRead).GetAwaiter().GetResult();   // connected, headers read, and now never read again
+            using var other = new HttpClient();
+            var waited = System.Diagnostics.Stopwatch.StartNew();
+            HttpStatusCode second = 0;
+            while (waited.ElapsedMilliseconds < 25_000)
+            {
+                using var again = other.GetAsync(url2, HttpCompletionOption.ResponseHeadersRead).GetAwaiter().GetResult();
+                second = again.StatusCode;
+                if (second == HttpStatusCode.OK) break;
+                Thread.Sleep(250);
+            }
+            e.StopTransport();
+            results.Add((first.StatusCode == HttpStatusCode.OK && second == HttpStatusCode.OK, $"a listener that stops reading is dropped after the write timeout and the slot is freed (took {waited.ElapsedMilliseconds / 1000.0:F1} s)"));
+        }
+        finally { TapStream.WriteTimeoutMs = savedTimeout; server2.StopAsync().GetAwaiter().GetResult(); }
         foreach (var r in results) yield return r;
     }
 

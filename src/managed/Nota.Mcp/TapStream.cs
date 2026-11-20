@@ -24,6 +24,9 @@ public static class TapStream
 {
     private static int _busy;
     private const int ChunkFrames = 1024;
+    /// <summary>A listener that has not accepted what was sent for this long is dropped, so a stalled or half-dead connection cannot
+    /// hold the single listener slot (a closed connection is otherwise noticed only when TCP gives up). Settable for tests.</summary>
+    public static int WriteTimeoutMs = 10_000;
 
     public static void Map(WebApplication app, IOutputTapSource tap)
     {
@@ -56,13 +59,17 @@ public static class TapStream
                 ulong lastDropped = 0;
                 while (!ctx.RequestAborted.IsCancellationRequested)
                 {
+                    // One deadline for everything this iteration writes: a client that stops reading cannot stall us past it.
+                    using var write = CancellationTokenSource.CreateLinkedTokenSource(ctx.RequestAborted);
+                    write.CancelAfter(WriteTimeoutMs);
+                    var ct = write.Token;
                     int n = tap.ReadOutputTap(frames, ChunkFrames);
                     if (n > 0)
                     {
                         bytes[0] = 1;
                         BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(1, 4), (uint)(n * 8));
                         for (int i = 0; i < n * 2; i++) BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(5 + i * 4, 4), frames[i]);
-                        await ctx.Response.Body.WriteAsync(bytes.AsMemory(0, 5 + n * 8), ctx.RequestAborted);
+                        await ctx.Response.Body.WriteAsync(bytes.AsMemory(0, 5 + n * 8), ct);
                     }
                     var dropped = tap.OutputTapDropped;
                     if (dropped != lastDropped)
@@ -71,12 +78,12 @@ public static class TapStream
                         var notice = new byte[13]; notice[0] = 2;
                         BinaryPrimitives.WriteUInt32LittleEndian(notice.AsSpan(1, 4), 8);
                         BinaryPrimitives.WriteUInt64LittleEndian(notice.AsSpan(5, 8), dropped);
-                        await ctx.Response.Body.WriteAsync(notice, ctx.RequestAborted);
+                        await ctx.Response.Body.WriteAsync(notice, ct);
                     }
-                    if (n == 0) { await ctx.Response.Body.FlushAsync(ctx.RequestAborted); await Task.Delay(4, ctx.RequestAborted); }
+                    if (n == 0) { await ctx.Response.Body.FlushAsync(ct); await Task.Delay(4, ct); }
                 }
             }
-            catch (OperationCanceledException) { /* the listener went away: the normal end */ }
+            catch (OperationCanceledException) { /* the listener went away, or stopped reading for WriteTimeoutMs: either way it is dropped */ }
             finally
             {
                 try { tap.EnableOutputTap(false); } catch (Exception) { }

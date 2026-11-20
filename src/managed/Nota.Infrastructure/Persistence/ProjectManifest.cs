@@ -109,7 +109,7 @@ public static class ProjectManifest
     /// "none" (index -1, or the hardware input for a record input) and is reported in <c>Warnings</c>.</summary>
     public static ImportResult Import(JsonObject manifest)
     {
-        if (manifest["schema"]?.GetValue<string>() != Schema) throw new InvalidDataException("Not an agentdaw.manifest/1 document.");
+        if (ManifestShape.FirstProblem(manifest) is { } problem) throw new InvalidDataException(problem);
         var root = manifest["root"]?.AsObject() ?? throw new InvalidDataException("Manifest has no root.");
         var warnings = new List<string>();
         var trackNodes = (root["lists"]?["tracks"] as JsonArray)?.Select(n => n!.AsObject()).ToList() ?? new();
@@ -213,11 +213,10 @@ public static class ProjectManifest
             }
         }
         Walk(json);
-        string full = Path.GetFullPath(bundleDir);
         foreach (var rel in paths)
         {
-            string file = Path.GetFullPath(Path.Combine(full, rel));
-            if (!file.StartsWith(full + Path.DirectorySeparatorChar, StringComparison.Ordinal) || !File.Exists(file)) continue; // never read outside the bundle
+            string? file = BundlePaths.Resolve(bundleDir, rel);
+            if (file is null || !File.Exists(file)) continue; // never read outside the bundle, through ".." or through a symbolic link
             using var fs = File.OpenRead(file);
             table[rel] = "sha256:" + System.Convert.ToHexString(SHA256.HashData(fs)).ToLowerInvariant();
         }
