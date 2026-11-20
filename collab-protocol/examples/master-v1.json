@@ -1,0 +1,25 @@
+{
+  "schema": "agentdaw.manifest/1",
+  "projectId": "11111111111111111111111111111111",
+  "version": "v1",
+  "root": {
+    "id": "11111111111111111111111111111111",
+    "type": "project",
+    "props": { "bpm": 120, "timeSignature": [4, 4] },
+    "lists": {
+      "tracks": [
+        {
+          "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1",
+          "type": "track",
+          "props": { "name": "Bass", "kind": "instrument", "volume": 0.8 },
+          "blobs": { "instrumentState": "sha256:0000000000000000000000000000000000000000000000000000000000000001" },
+          "lists": {
+            "clips": [
+              { "id": "cccccccccccccccccccccccccccccc01", "type": "clip", "props": { "start": 0, "length": 16, "notes": [[36, 0, 4, 0.9]] } }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

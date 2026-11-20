@@ -1,0 +1,13 @@
+{
+  "schema": "agentdaw.changeset/1",
+  "id": "proposal-1-rev-1",
+  "projectId": "11111111111111111111111111111111",
+  "baseVersion": "v1",
+  "label": "Producer A: drum pattern",
+  "ops": [
+    { "op": "add", "parent": "11111111111111111111111111111111", "list": "tracks", "after": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1",
+      "node": { "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa2", "type": "track", "props": { "name": "Drums", "kind": "instrument" } } },
+    { "op": "add", "parent": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa2", "list": "clips", "after": null,
+      "node": { "id": "cccccccccccccccccccccccccccccc02", "type": "clip", "props": { "start": 0, "length": 16, "notes": [[36, 0, 1, 1], [38, 4, 1, 0.9]] } } }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@agent-daw/collab-protocol",
+  "version": "1.0.0",
+  "description": "Manifest and change-set protocol for collaborative DAW projects: JSON schema, apply, diff and three-way merge with note-level conflict detection.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "files": ["src", "schema", "contract", "examples", "LICENSE", "README.md"],
+  "scripts": { "test": "node --test test/*.test.mjs" },
+  "dependencies": { "ajv": "^8.17.1" }
+}

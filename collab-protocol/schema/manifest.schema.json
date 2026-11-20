@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentdaw.invalid/schema/manifest/1",
+  "title": "AGENT DAW collaboration manifest, version 1",
+  "description": "A snapshot of a project as a tree of objects keyed by stable ids. Copyright the AGENT DAW protocol authors, Apache-2.0. Authored from the protocol specification, not derived from any DAW's source.",
+  "type": "object",
+  "required": ["schema", "projectId", "root"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "agentdaw.manifest/1" },
+    "projectId": { "$ref": "#/$defs/id" },
+    "version": { "description": "Opaque master version id assigned by the collaboration service; absent in a private workspace that has no base.", "type": "string", "minLength": 1, "maxLength": 128 },
+    "root": { "$ref": "#/$defs/node" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+    "blobHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "typeName": { "type": "string", "pattern": "^[a-z][A-Za-z0-9_.-]{0,63}$" },
+    "key": { "type": "string", "minLength": 1, "maxLength": 128, "not": { "enum": ["__proto__", "constructor", "prototype"] } },
+    "node": {
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "$ref": "#/$defs/typeName" },
+        "props": { "description": "Independent fields. Each key merges on its own; a value is any JSON and is compared as a whole.", "type": "object", "propertyNames": { "$ref": "#/$defs/key" } },
+        "blobs": { "description": "Named content-addressed payloads (audio, plugin state). Opaque: never merged inside.", "type": "object", "propertyNames": { "$ref": "#/$defs/key" }, "additionalProperties": { "$ref": "#/$defs/blobHash" } },
+        "lists": { "description": "Named ordered child lists.", "type": "object", "propertyNames": { "$ref": "#/$defs/key" }, "additionalProperties": { "type": "array", "items": { "$ref": "#/$defs/node" } } }
+      }
+    }
+  }
+}

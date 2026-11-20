@@ -1,0 +1,93 @@
+{
+  "api": "agentdaw.local/1",
+  "description": "The DAW's local collaboration contract. A host program (Agent One) drives it over the DAW's MCP server (loopback, off unless enabled in Preferences). Tool names and parameters below are frozen for version 1; any change needs agentdaw.local/2. Copyright the AGENT DAW protocol authors, Apache-2.0.",
+  "manifestSchema": "agentdaw.manifest/1",
+  "tools": [
+    {
+      "name": "collab_info",
+      "params": [],
+      "returns": "{api, manifestSchema, projectFormat, capabilities[], projectPath|null, unsavedChanges}"
+    },
+    {
+      "name": "collab_export_manifest",
+      "params": [
+        {
+          "name": "projectId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "version",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "returns": "manifest JSON string (agentdaw.manifest/1). Errors if the project was never saved or has unsaved edits."
+    },
+    {
+      "name": "collab_check_manifest",
+      "params": [
+        {
+          "name": "manifestJson",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "bundlePath",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "returns": "{ok, errors[], warnings[], tracks, missingBlobs[], corruptBlobs[]}"
+    },
+    {
+      "name": "collab_apply_manifest",
+      "params": [
+        {
+          "name": "manifestJson",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "bundlePath",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "confirmReplace",
+          "type": "boolean",
+          "required": false
+        },
+        {
+          "name": "discardUnsaved",
+          "type": "boolean",
+          "required": false
+        }
+      ],
+      "returns": "{applied, errors[], warnings[], tracks}. Never changes the project unless applied is true."
+    }
+  ],
+  "capabilities": [
+    "manifest.export",
+    "manifest.check",
+    "manifest.apply",
+    "stable-ids",
+    "audio.tap.http"
+  ],
+  "reserved_not_implemented": [
+    "events.view (playhead, selection, viewport)",
+    "transport.sync",
+    "studios.switch (My Studio / Shared Studio)"
+  ],
+  "rules": [
+    "The DAW holds no collaboration policy, credentials or network code behind this contract.",
+    "A read never changes the project. Applying requires an explicit confirmation and refuses over unsaved edits unless told to discard them.",
+    "Reserved items are listed so a host can tell 'not implemented' from 'unknown'; capabilities lists only what is implemented."
+  ],
+  "audio_tap": {
+    "endpoint": "GET /audio/tap on the DAW's loopback server",
+    "refuses": "any request with an Origin header, or a Host other than loopback; a second listener while one is connected (409)",
+    "format": "first line JSON {format:'f32le',channels:2,sampleRate,capacityFrames}, then messages: u8 type, u32le payload length, payload; type 1 = interleaved stereo float32 frames, type 2 = u64 total frames dropped",
+    "notes": "A server notices a closed connection late (about 2 s), so a client reconnecting after a disconnect should retry on 409."
+  }
+}

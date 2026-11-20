@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentdaw.invalid/schema/changeset/1",
+  "title": "AGENT DAW change set, version 1",
+  "description": "An ordered list of operations that turns the manifest at baseVersion into a new one. Apache-2.0.",
+  "type": "object",
+  "required": ["schema", "id", "projectId", "ops"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "agentdaw.changeset/1" },
+    "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "projectId": { "$ref": "https://agentdaw.invalid/schema/manifest/1#/$defs/id" },
+    "baseVersion": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "label": { "type": "string", "maxLength": 200 },
+    "ops": { "type": "array", "items": { "$ref": "#/$defs/op" } }
+  },
+  "$defs": {
+    "id": { "$ref": "https://agentdaw.invalid/schema/manifest/1#/$defs/id" },
+    "key": { "$ref": "https://agentdaw.invalid/schema/manifest/1#/$defs/key" },
+    "expect": {
+      "description": "Optional precondition on the current value: {value} must equal it, {absent:true} must be unset.",
+      "oneOf": [
+        { "type": "object", "required": ["value"], "additionalProperties": false, "properties": { "value": {} } },
+        { "type": "object", "required": ["absent"], "additionalProperties": false, "properties": { "absent": { "const": true } } }
+      ]
+    },
+    "op": {
+      "oneOf": [
+        { "type": "object", "required": ["op", "parent", "list", "after", "node"], "additionalProperties": false,
+          "properties": { "op": { "const": "add" }, "parent": { "$ref": "#/$defs/id" }, "list": { "$ref": "#/$defs/key" },
+            "after": { "description": "Id of the sibling to insert after; null inserts first.", "oneOf": [ { "$ref": "#/$defs/id" }, { "type": "null" } ] },
+            "node": { "$ref": "https://agentdaw.invalid/schema/manifest/1#/$defs/node" } } },
+        { "type": "object", "required": ["op", "id"], "additionalProperties": false,
+          "properties": { "op": { "const": "remove" }, "id": { "$ref": "#/$defs/id" } } },
+        { "type": "object", "required": ["op", "id", "parent", "list", "after"], "additionalProperties": false,
+          "properties": { "op": { "const": "move" }, "id": { "$ref": "#/$defs/id" }, "parent": { "$ref": "#/$defs/id" }, "list": { "$ref": "#/$defs/key" },
+            "after": { "oneOf": [ { "$ref": "#/$defs/id" }, { "type": "null" } ] } } },
+        { "type": "object", "required": ["op", "id", "key", "value"], "additionalProperties": false,
+          "properties": { "op": { "const": "set" }, "id": { "$ref": "#/$defs/id" }, "key": { "$ref": "#/$defs/key" }, "value": {}, "expect": { "$ref": "#/$defs/expect" } } },
+        { "type": "object", "required": ["op", "id", "key"], "additionalProperties": false,
+          "properties": { "op": { "const": "unset" }, "id": { "$ref": "#/$defs/id" }, "key": { "$ref": "#/$defs/key" }, "expect": { "$ref": "#/$defs/expect" } } },
+        { "type": "object", "required": ["op", "id", "name", "hash"], "additionalProperties": false,
+          "properties": { "op": { "const": "setBlob" }, "id": { "$ref": "#/$defs/id" }, "name": { "$ref": "#/$defs/key" }, "hash": { "$ref": "https://agentdaw.invalid/schema/manifest/1#/$defs/blobHash" }, "expect": { "$ref": "#/$defs/expect" } } },
+        { "type": "object", "required": ["op", "id", "name"], "additionalProperties": false,
+          "properties": { "op": { "const": "unsetBlob" }, "id": { "$ref": "#/$defs/id" }, "name": { "$ref": "#/$defs/key" }, "expect": { "$ref": "#/$defs/expect" } } }
+      ]
+    }
+  }
+}

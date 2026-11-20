@@ -1,0 +1,374 @@
+{
+  "schema": "agentdaw.manifest/1",
+  "projectId": "11111111111111111111111111111111",
+  "version": "v1",
+  "root": {
+    "id": "11111111111111111111111111111111",
+    "type": "project",
+    "props": {
+      "formatVersion": 32,
+      "app": "Nota",
+      "transport": {
+        "bpm": 128,
+        "masterVolume": 1,
+        "metronomeOn": false,
+        "loopOn": false,
+        "timeSigNumerator": 4,
+        "timeSigDenominator": 4
+      },
+      "sceneCount": 8,
+      "session": {
+        "launchQuant": 4,
+        "follow": true,
+        "recordLength": 0,
+        "scenes": []
+      },
+      "masterVolumeAutomation": [],
+      "master": {
+        "colorIndex": -1,
+        "devices": []
+      },
+      "mixer": {
+        "panLaw": "balance",
+        "panLawLegacy": false
+      },
+      "sections": []
+    },
+    "blobs": {
+      "plugin-states/29655bb626af743e0faf70ce5ae7cc85.bin": "sha256:29655bb626af743e0faf70ce5ae7cc85e3d3b3687283f23ecc27ce8e26b1e65c",
+      "samples/929d163935e85e647209fb15fcaf8364.wav": "sha256:68960c1fa62d4b18cd6eb5697a66dd3ca76f034eb2b8fe207fbad7f8deeb86c7"
+    },
+    "lists": {
+      "tracks": [
+        {
+          "id": "f8eec444c4e74be799e42bd57803947b",
+          "type": "track",
+          "props": {
+            "type": 1,
+            "name": "Drums",
+            "volume": 1,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "armed": false,
+            "returnIndex": -1,
+            "groupId": {
+              "$track": "f0271c7fbf924b899101ab395f469a48"
+            },
+            "colorIndex": -1,
+            "recordInput": 0,
+            "monitor": false,
+            "inputChannels": 0,
+            "inputFirst": 1,
+            "inputWidth": 2,
+            "midiFrom": -1,
+            "sends": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "instrument": {
+              "kind": 0,
+              "state": "plugin-states/29655bb626af743e0faf70ce5ae7cc85.bin",
+              "sidechainSource": -1,
+              "sidechainPart": -1,
+              "folded": false,
+              "bypassed": false
+            },
+            "midiEffects": [],
+            "devices": [],
+            "automation": [],
+            "modulators": [],
+            "cvLinks": []
+          },
+          "lists": {
+            "midiClips": [
+              {
+                "id": "bb3495e80ab94cd8a5b56817f16afea5",
+                "type": "midiClip",
+                "props": {
+                  "name": "Beat",
+                  "active": true,
+                  "startBeat": 0,
+                  "lengthBeats": 4,
+                  "notes": [
+                    {
+                      "pitch": 36,
+                      "start": 0,
+                      "length": 1,
+                      "velocity": 1
+                    },
+                    {
+                      "pitch": 38,
+                      "start": 1,
+                      "length": 1,
+                      "velocity": 0.9
+                    }
+                  ]
+                }
+              }
+            ],
+            "sessionSlots": [
+              {
+                "id": "0c2cf4ebaf70407faabfe8bcbc80c4a6",
+                "type": "sessionSlot",
+                "props": {
+                  "scene": 1,
+                  "lengthBeats": 4,
+                  "notes": [],
+                  "color": -1,
+                  "launchMode": 0,
+                  "quant": -1,
+                  "legato": false,
+                  "loop": true,
+                  "velocityAmount": 0,
+                  "followA": 0,
+                  "followB": 0,
+                  "chanceA": 100,
+                  "chanceB": 0,
+                  "followBeats": 0,
+                  "jumpScene": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "eecad867a1f444b5844dc12df75536b2",
+          "type": "track",
+          "props": {
+            "type": 1,
+            "name": "Bass",
+            "volume": 1,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "armed": false,
+            "returnIndex": -1,
+            "groupId": -1,
+            "colorIndex": -1,
+            "recordInput": 0,
+            "monitor": false,
+            "inputChannels": 0,
+            "inputFirst": 1,
+            "inputWidth": 2,
+            "midiFrom": {
+              "$track": "f8eec444c4e74be799e42bd57803947b"
+            },
+            "sends": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "instrument": {
+              "kind": 0,
+              "state": "plugin-states/29655bb626af743e0faf70ce5ae7cc85.bin",
+              "sidechainSource": -1,
+              "sidechainPart": -1,
+              "folded": false,
+              "bypassed": false
+            },
+            "midiEffects": [],
+            "devices": [],
+            "automation": [],
+            "modulators": [],
+            "cvLinks": []
+          },
+          "lists": {
+            "midiClips": [
+              {
+                "id": "10e7df8acc40421bb7fe76757739ea17",
+                "type": "midiClip",
+                "props": {
+                  "name": "Line",
+                  "active": true,
+                  "startBeat": 4,
+                  "lengthBeats": 4,
+                  "notes": []
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "531fba7732d94edbb9091464c065103c",
+          "type": "track",
+          "props": {
+            "type": 0,
+            "name": "Vox",
+            "volume": 1,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "armed": false,
+            "returnIndex": -1,
+            "groupId": -1,
+            "colorIndex": -1,
+            "recordInput": 0,
+            "monitor": false,
+            "inputChannels": 1,
+            "inputFirst": 1,
+            "inputWidth": 1,
+            "midiFrom": -1,
+            "sends": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "midiEffects": [],
+            "devices": [
+              {
+                "builtinKind": 1,
+                "bypassed": false,
+                "folded": false,
+                "params": [
+                  -18,
+                  3,
+                  10,
+                  120,
+                  0,
+                  6,
+                  100,
+                  0,
+                  0,
+                  0,
+                  0,
+                  48,
+                  0,
+                  20,
+                  20000,
+                  0,
+                  0,
+                  0,
+                  0.7071,
+                  1,
+                  1,
+                  0
+                ],
+                "sidechainSource": {
+                  "$track": "f8eec444c4e74be799e42bd57803947b"
+                },
+                "sidechainPart": -1,
+                "sidechainGain": 0,
+                "sidechainMix": 1,
+                "sidechainTapPre": false
+              }
+            ],
+            "automation": [],
+            "modulators": [],
+            "cvLinks": []
+          },
+          "lists": {
+            "audioClips": [
+              {
+                "id": "943d15c83c094e46a88a700d12198570",
+                "type": "audioClip",
+                "props": {
+                  "sample": "samples/929d163935e85e647209fb15fcaf8364.wav",
+                  "active": true,
+                  "startBeat": 0,
+                  "sourceOffsetFrames": 0,
+                  "lengthFrames": 0,
+                  "gain": 1,
+                  "pitchSemitones": 0,
+                  "warpEnabled": 0,
+                  "warpMode": 3,
+                  "warpBeats": 0,
+                  "warpPlayStart": 0,
+                  "warpPlayEnd": 0,
+                  "reversed": false
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "f0271c7fbf924b899101ab395f469a48",
+          "type": "track",
+          "props": {
+            "type": 3,
+            "name": "Rhythm",
+            "volume": 1,
+            "pan": 0,
+            "mute": false,
+            "solo": false,
+            "armed": false,
+            "returnIndex": -1,
+            "groupId": -1,
+            "colorIndex": -1,
+            "recordInput": 0,
+            "monitor": false,
+            "inputChannels": 0,
+            "inputFirst": 1,
+            "inputWidth": 2,
+            "midiFrom": -1,
+            "sends": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "midiEffects": [],
+            "devices": [],
+            "automation": [],
+            "modulators": [],
+            "cvLinks": []
+          }
+        },
+        {
+          "id": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee01",
+          "type": "track",
+          "props": {
+            "type": 1,
+            "name": "Kick",
+            "volume": 1,
+            "pan": 0
+          },
+          "lists": {
+            "midiClips": [
+              {
+                "id": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee02",
+                "type": "midiClip",
+                "props": {
+                  "name": "Four on the floor",
+                  "active": true,
+                  "startBeat": 0,
+                  "lengthBeats": 4,
+                  "notes": [
+                    {
+                      "pitch": 36,
+                      "start": 0,
+                      "length": 0.5,
+                      "velocity": 1
+                    },
+                    {
+                      "pitch": 36,
+                      "start": 1,
+                      "length": 0.5,
+                      "velocity": 1
+                    },
+                    {
+                      "pitch": 36,
+                      "start": 2,
+                      "length": 0.5,
+                      "velocity": 1
+                    },
+                    {
+                      "pitch": 36,
+                      "start": 3,
+                      "length": 0.5,
+                      "velocity": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "schema": "agentdaw.changeset/1",
+  "id": "proposal-kick-rev-1",
+  "projectId": "11111111111111111111111111111111",
+  "baseVersion": "v1",
+  "label": "Producer A: kick pattern",
+  "ops": [
+    {
+      "op": "add",
+      "parent": "11111111111111111111111111111111",
+      "list": "tracks",
+      "after": "f0271c7fbf924b899101ab395f469a48",
+      "node": {
+        "id": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee01",
+        "type": "track",
+        "props": {
+          "type": 1,
+          "name": "Kick",
+          "volume": 1,
+          "pan": 0
+        }
+      }
+    },
+    {
+      "op": "add",
+      "parent": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee01",
+      "list": "midiClips",
+      "after": null,
+      "node": {
+        "id": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee02",
+        "type": "midiClip",
+        "props": {
+          "name": "Four on the floor",
+          "active": true,
+          "startBeat": 0,
+          "lengthBeats": 4,
+          "notes": [
+            {
+              "pitch": 36,
+              "start": 0,
+              "length": 0.5,
+              "velocity": 1
+            },
+            {
+              "pitch": 36,
+              "start": 1,
+              "length": 0.5,
+              "velocity": 1
+            },
+            {
+              "pitch": 36,
+              "start": 2,
+              "length": 0.5,
+              "velocity": 1
+            },
+            {
+              "pitch": 36,
+              "start": 3,
+              "length": 0.5,
+              "velocity": 1
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
